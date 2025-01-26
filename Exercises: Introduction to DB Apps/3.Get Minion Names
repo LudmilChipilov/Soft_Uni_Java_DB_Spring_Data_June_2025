@@ -1,0 +1,48 @@
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+
+public class _3_Get_Minion_Names {
+    private static final Connection connection = DBConnection.getConnection();
+    private static final BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+
+    public static void main(String[] args) throws SQLException, IOException {
+
+        getMinionNames();
+
+        connection.close();
+
+    }
+    public static void getMinionNames() throws IOException, SQLException {
+        int villainId = Integer.parseInt(reader.readLine());
+
+        PreparedStatement preparedStatement = connection.prepareStatement("SELECT id, name FROM villains WHERE id = ?");
+        preparedStatement.setInt(1, villainId);
+        ResultSet resultSet;
+        resultSet = preparedStatement.executeQuery();
+        if(!resultSet.next())
+        {
+            System.out.println("No villain with ID " + villainId + " exists in the database.");
+            return;
+        }
+
+        System.out.printf("Villain: %s%n", resultSet.getString("name"));
+
+        preparedStatement = connection.prepareStatement(
+                "SELECT m.name, m.age FROM minions AS m " +
+                        "JOIN minions_villains AS mv ON m.id = mv.minion_id " +
+                    "WHERE mv.villain_id = ?");
+        preparedStatement.setInt(1, villainId);
+        int count = 1;
+        resultSet = preparedStatement.executeQuery();
+        while(resultSet.next()) {
+            System.out.printf("%d. %s %d%n", count++,
+                    resultSet.getString("name"),
+                    resultSet.getInt("age"));
+        }
+    }
+}
